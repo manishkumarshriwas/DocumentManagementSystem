@@ -1,7 +1,8 @@
+// components/Sidebar.js
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const Sidebar = ({ currentPage, setCurrentPage }) => {
+const Sidebar = ({ currentPage, setCurrentPage, onLogout }) => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
 
@@ -26,13 +27,14 @@ const Sidebar = ({ currentPage, setCurrentPage }) => {
   const bottomNavItems = [
     { id: 'profile', icon: 'fa-user', label: 'Profile' },
     { id: 'setting', icon: 'fa-cog', label: 'Settings' },
+    { id: 'help', icon: 'fa-question-circle', label: 'Help & Support' },
     { id: 'logout', icon: 'fa-sign-out-alt', label: 'Logout' },
   ];
 
   return (
     <div id="sidebar" className={`bg-gradient-to-b from-blue-800 to-indigo-900 text-white transition-all duration-300 flex flex-col ${sidebarOpen ? 'w-64' : 'w-20'}`}>
       <div className="p-4 flex items-center justify-between">
-        {sidebarOpen && <h1 className="text-xl font-bold">DocManager</h1>}
+        {sidebarOpen && <h1 className="text-xl font-bold">Document Management System</h1>}
         <button 
           id="sidebarToggle" 
           className="p-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -64,7 +66,18 @@ const Sidebar = ({ currentPage, setCurrentPage }) => {
         <ul>
           {bottomNavItems.map((item) => (
             <li key={item.id}>
-              <button className="flex items-center p-4 text-left w-full hover:bg-blue-700 transition-colors">
+              <button
+                onClick={() => {
+                  if (item.id === 'logout') {
+                    onLogout();
+                  } else {
+                    navigateToPage(item.id);
+                  }
+                }}
+                className={`flex items-center p-4 text-left w-full ${
+                  currentPage === item.id ? 'bg-blue-700' : 'hover:bg-blue-700'
+                } transition-colors`}
+              >
                 <i className={`fas ${item.icon} text-xl w-6`}></i>
                 {sidebarOpen && <span className="ml-3">{item.label}</span>}
               </button>
@@ -77,10 +90,6 @@ const Sidebar = ({ currentPage, setCurrentPage }) => {
 };
 
 export default Sidebar;
-
-
-
-
 
 // import React from "react";
 // import { BellIcon, MagnifyingGlassIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
