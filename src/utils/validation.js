@@ -7,3 +7,13 @@ export const validateOtp = (otp) => {
   // Check if OTP is exactly 6 digits
   return /^\d{6}$/.test(otp);
 };
+
+export const validateEmail = (email) => {
+  // Basic email validation
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
+export const validatePassword = (password) => {
+  // Password should be at least 8 characters
+  return password.length >= 8;
+};
