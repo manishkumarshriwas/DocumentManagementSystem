@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { generateOtp, validateOtp } from '../services/api';
-import { validateMobileNumber, validateOtp as validateOtpUtil } from '../utils/validation';
+import { generateOtp, validateOtp, emailLogin } from '../services/api';
+import { validateMobileNumber, validateOtp as validateOtpUtil, validateEmail } from '../utils/validation';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
+  const [loginMethod, setLoginMethod] = useState('mobile'); // 'mobile' or 'email'
   const [mobileNumber, setMobileNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [showOtpSection, setShowOtpSection] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -30,6 +33,18 @@ const Login = () => {
     setMobileNumber(value);
     if (error) setError('');
     setIsRegistered(true); // Reset registration status when mobile number changes
+  };
+
+  // Handle email change
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value);
+    if (error) setError('');
+  };
+
+  // Handle password change
+  const handlePasswordChange = (e) => {
+    setPassword(e.target.value);
+    if (error) setError('');
   };
 
   // Clear mobile number
@@ -60,7 +75,7 @@ const Login = () => {
     }
   };
 
-  // Send OTP
+  // Send OTP (for mobile login)
   const handleSendOtp = async () => {
     setError('');
     setSuccess('');
@@ -76,17 +91,14 @@ const Login = () => {
       const response = await generateOtp(mobileNumber);
       console.log('OTP generation response:', response);
       
-      // Check if response has status property (API returns status instead of success)
       if (response.status === true || response.success === true) {
         setSuccess('OTP sent successfully!');
         setShowOtpSection(true);
         setTimer(120); // Reset timer
         setIsRegistered(true);
       } else {
-        // Handle error message from response
         const errorMessage = response.data || response.message || 'Failed to send OTP';
         
-        // Check if the error is about mobile number not being registered
         if (errorMessage.includes('not yet Registered') || errorMessage.includes('not registered')) {
           setIsRegistered(false);
           setError('This mobile number is not registered in our system.');
@@ -98,9 +110,7 @@ const Login = () => {
       console.error('OTP generation error:', err);
       setApiError(err);
       
-      // Handle different error scenarios
       if (err.response) {
-        // Server responded with error status
         const status = err.response.status;
         const data = err.response.data;
         
@@ -114,10 +124,8 @@ const Login = () => {
           setError(data.message || 'Failed to send OTP');
         }
       } else if (err.request) {
-        // Request was made but no response received
         setError('Network error. Please check your connection.');
       } else {
-        // Error in request setup
         setError('An unexpected error occurred.');
       }
     } finally {
@@ -125,7 +133,7 @@ const Login = () => {
     }
   };
 
-  // Verify OTP
+  // Verify OTP (for mobile login)
   const handleVerifyOtp = async () => {
     setError('');
     setSuccess('');
@@ -142,7 +150,6 @@ const Login = () => {
       const response = await validateOtp(mobileNumber, otpValue);
       console.log('OTP validation response:', response);
       
-      // Check if response has status property (API returns status instead of success)
       if (response.status === true || response.success === true) {
         if (response.token) {
           login(response.token);
@@ -151,7 +158,6 @@ const Login = () => {
           setError('Authentication successful but no token received');
         }
       } else {
-        // Handle error message from response
         const errorMessage = response.data || response.message || 'Invalid OTP';
         setError(errorMessage);
       }
@@ -182,6 +188,68 @@ const Login = () => {
     }
   };
 
+  // Email login
+  const handleEmailLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setApiError(null);
+
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    if (!password) {
+      setError('Please enter your password');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await emailLogin(email, password);
+      console.log('Email login response:', response);
+      
+      if (response.status === true || response.success === true) {
+        if (response.token) {
+          login(response.token);
+          navigate(from, { replace: true });
+        } else {
+          setError('Authentication successful but no token received');
+        }
+      } else {
+        const errorMessage = response.data || response.message || 'Login failed';
+        setError(errorMessage);
+      }
+    } catch (err) {
+      console.error('Email login error:', err);
+      setApiError(err);
+      
+      if (err.response) {
+        const status = err.response.status;
+        const data = err.response.data;
+        
+        if (status === 400) {
+          setError(data.message || 'Invalid email or password');
+        } else if (status === 401) {
+          setError('Incorrect email or password');
+        } else if (status === 429) {
+          setError('Too many attempts. Please try again later.');
+        } else if (status >= 500) {
+          setError('Server error. Please try again later.');
+        } else {
+          setError(data.message || 'Login failed');
+        }
+      } else if (err.request) {
+        setError('Network error. Please check your connection.');
+      } else {
+        setError('An unexpected error occurred.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Resend OTP
   const handleResendOtp = async () => {
     setError('');
@@ -193,7 +261,6 @@ const Login = () => {
       const response = await generateOtp(mobileNumber);
       console.log('OTP resend response:', response);
       
-      // Check if response has status property (API returns status instead of success)
       if (response.status === true || response.success === true) {
         setSuccess('OTP resent successfully!');
         setOtp(['', '', '', '', '', '']);
@@ -204,10 +271,8 @@ const Login = () => {
           otpInputRefs.current[0].focus();
         }
       } else {
-        // Handle error message from response
         const errorMessage = response.data || response.message || 'Failed to resend OTP';
         
-        // Check if the error is about mobile number not being registered
         if (errorMessage.includes('not yet Registered') || errorMessage.includes('not registered')) {
           setIsRegistered(false);
           setError('This mobile number is not registered in our system.');
@@ -264,8 +329,7 @@ const Login = () => {
 
   // Handle registration
   const handleRegister = () => {
-    // For now, just show a message that registration is not available
-    setError('Registration is not available at this time. Please use a registered mobile number.');
+    navigate('/register');
   };
 
   return (
@@ -285,104 +349,204 @@ const Login = () => {
           Sign in to your account
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          We'll send a one-time password to your mobile phone
+          {loginMethod === 'mobile' 
+            ? "We'll send a one-time password to your mobile phone" 
+            : "Enter your email and password to sign in"}
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10 backdrop-blur-sm bg-white/80 border border-white/20">
           <div className="space-y-6">
-            <div>
-              <label htmlFor="mobile" className="block text-sm font-medium text-gray-700">
-                Mobile number
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500 sm:text-sm">+91</span>
-                </div>
-                <input
-                  type="text"
-                  name="mobile"
-                  id="mobile"
-                  className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-12 sm:text-sm border-gray-300 rounded-md py-3"
-                  placeholder="9876543210"
-                  maxLength="10"
-                  value={mobileNumber}
-                  onChange={handleMobileChange}
-                />
-                <div className="absolute inset-y-0 right-0 flex items-center">
-                  <button 
-                    type="button" 
-                    className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-green-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300 ease-in-out transform hover:scale-105 mr-2"
-                    onClick={handleClearMobile}
-                  >
-                    Clear
-                  </button>
-                </div>
-              </div>
-              <p className="mt-2 text-xs text-gray-500">Enter a 10-digit mobile number</p>
+            {/* Login method toggle */}
+            <div className="flex border-b border-gray-200">
+              <button
+                className={`py-2 px-4 text-center font-medium text-sm w-1/2 ${
+                  loginMethod === 'mobile'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                onClick={() => setLoginMethod('mobile')}
+              >
+                Mobile Login
+              </button>
+              <button
+                className={`py-2 px-4 text-center font-medium text-sm w-1/2 ${
+                  loginMethod === 'email'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                onClick={() => setLoginMethod('email')}
+              >
+                Email Login
+              </button>
             </div>
 
-            {showOtpSection && (
-              <div id="otpSection">
-                <label htmlFor="otp" className="block text-sm font-medium text-gray-700">
-                  One-Time Password
-                </label>
-                <div className="mt-1 flex justify-between space-x-2">
-                  {otp.map((digit, index) => (
+            {loginMethod === 'mobile' ? (
+              // Mobile login form
+              <>
+                <div>
+                  <label htmlFor="mobile" className="block text-sm font-medium text-gray-700">
+                    Mobile number
+                  </label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 sm:text-sm">+91</span>
+                    </div>
                     <input
-                      key={index}
                       type="text"
-                      maxLength="1"
-                      className="w-12 h-12 text-center text-xl border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500 transition-all duration-300"
-                      value={digit}
-                      onChange={(e) => handleOtpChange(e, index)}
-                      onKeyDown={(e) => handleOtpKeyDown(e, index)}
-                      ref={(ref) => (otpInputRefs.current[index] = ref)}
+                      name="mobile"
+                      id="mobile"
+                      className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-12 sm:text-sm border-gray-300 rounded-md py-3"
+                      placeholder="9876543210"
+                      maxLength="10"
+                      value={mobileNumber}
+                      onChange={handleMobileChange}
                     />
-                  ))}
+                    <div className="absolute inset-y-0 right-0 flex items-center">
+                      <button 
+                        type="button" 
+                        className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-green-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300 ease-in-out transform hover:scale-105 mr-2"
+                        onClick={handleClearMobile}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">Enter a 10-digit mobile number</p>
                 </div>
-                <div className="flex items-center justify-between mt-4">
-                  <p className="text-sm text-gray-600">Didn't receive code?</p>
-                  <button 
-                    className="text-sm text-primary-600 hover:text-primary-500 font-medium transition-colors duration-200 ease-in-out"
-                    onClick={handleResendOtp}
-                    disabled={resendLoading || timer > 0}
+
+                {showOtpSection && (
+                  <div id="otpSection">
+                    <label htmlFor="otp" className="block text-sm font-medium text-gray-700">
+                      One-Time Password
+                    </label>
+                    <div className="mt-1 flex justify-between space-x-2">
+                      {otp.map((digit, index) => (
+                        <input
+                          key={index}
+                          type="text"
+                          maxLength="1"
+                          className="w-12 h-12 text-center text-xl border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500 transition-all duration-300"
+                          value={digit}
+                          onChange={(e) => handleOtpChange(e, index)}
+                          onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                          ref={(ref) => (otpInputRefs.current[index] = ref)}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between mt-4">
+                      <p className="text-sm text-gray-600">Didn't receive code?</p>
+                      <button 
+                        className="text-sm text-primary-600 hover:text-primary-500 font-medium transition-colors duration-200 ease-in-out"
+                        onClick={handleResendOtp}
+                        disabled={resendLoading || timer > 0}
+                      >
+                        {resendLoading ? 'Sending...' : timer > 0 ? `Resend in ${formatTime(timer)}` : 'Resend OTP'}
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-center mt-4">
+                      <span className="text-gray-500 text-sm countdown">Code expires in {formatTime(timer)}</span>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  {!showOtpSection ? (
+                    <button
+                      type="button"
+                      className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300 transform hover:-translate-y-1"
+                      id="sendOtpBtn"
+                      onClick={handleSendOtp}
+                      disabled={loading}
+                    >
+                      {loading ? 'Sending...' : 'Send OTP'}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300 transform hover:-translate-y-1"
+                      id="verifyOtpBtn"
+                      onClick={handleVerifyOtp}
+                      disabled={loading}
+                    >
+                      {loading ? 'Verifying...' : 'Verify OTP'}
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : (
+              // Email login form
+              <form onSubmit={handleEmailLogin}>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                    Email address
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      type="email"
+                      name="email"
+                      id="email"
+                      className="focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-3"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={handleEmailChange}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                    Password
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      type="password"
+                      name="password"
+                      id="password"
+                      className="focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-3"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={handlePasswordChange}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <input
+                      id="remember-me"
+                      name="remember-me"
+                      type="checkbox"
+                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                      Remember me
+                    </label>
+                  </div>
+
+                  <div className="text-sm">
+                    <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
+                      Forgot your password?
+                    </a>
+                  </div>
+                </div>
+
+                <div>
+                  <button
+                    type="submit"
+                    className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300 transform hover:-translate-y-1"
+                    disabled={loading}
                   >
-                    {resendLoading ? 'Sending...' : timer > 0 ? `Resend in ${formatTime(timer)}` : 'Resend OTP'}
+                    {loading ? 'Signing in...' : 'Sign in'}
                   </button>
                 </div>
-                <div className="flex items-center justify-center mt-4">
-                  <span className="text-gray-500 text-sm countdown">Code expires in {formatTime(timer)}</span>
-                </div>
-              </div>
+              </form>
             )}
 
-            <div>
-              {!showOtpSection ? (
-                <button
-                  type="button"
-                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300 transform hover:-translate-y-1"
-                  id="sendOtpBtn"
-                  onClick={handleSendOtp}
-                  disabled={loading}
-                >
-                  {loading ? 'Sending...' : 'Send OTP'}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300 transform hover:-translate-y-1"
-                  id="verifyOtpBtn"
-                  onClick={handleVerifyOtp}
-                  disabled={loading}
-                >
-                  {loading ? 'Verifying...' : 'Verify OTP'}
-                </button>
-              )}
-            </div>
-
-            {!isRegistered && (
+            {!isRegistered && loginMethod === 'mobile' && (
               <div className="bg-blue-50 border border-blue-400 text-blue-700 px-4 py-3 rounded-md" role="alert">
                 <div className="flex flex-col">
                   <div className="flex items-center">
@@ -452,6 +616,26 @@ const Login = () => {
                   <i className="fa-brands fa-facebook text-lg"></i>
                 </a>
               </div>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Don't have an account?</span>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <a
+                href="/register"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-blue-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300"
+              >
+                Create an account
+              </a>
             </div>
           </div>
         </div>
