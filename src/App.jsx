@@ -15,6 +15,7 @@ import Profile from './components/Profile';
 import Setting from './components/Setting';
 import HelpSupport from './components/HelpSupport';
 import Login from './components/Login';
+import Register from './components/Register';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './styles/global.css';
 
@@ -86,12 +87,12 @@ function AppContent() {
     setTimeout(() => setShowToast(false), 3000);
   };
 
+  const navigateToPage = (page) => setCurrentPage(page);
+
   const handleLogout = () => {
     logout();
     showToastNotification('You have been logged out successfully');
   };
-
-  const navigateToPage = (page) => setCurrentPage(page);
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
@@ -152,6 +153,7 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="*" element={
             <ProtectedLayout>
               <AppContent />
@@ -164,7 +166,6 @@ function App() {
 }
 
 export default App;
-
 
 
 // import React, { useState, useEffect } from 'react';
