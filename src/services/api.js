@@ -45,7 +45,7 @@ api.interceptors.response.use(
   }
 );
 
-// API functions
+// Existing API functions
 export const generateOtp = async (mobileNumber) => {
   try {
     console.log('Sending OTP request for:', mobileNumber);
@@ -104,6 +104,43 @@ export const getDocumentTags = async (term) => {
     return response.data;
   } catch (error) {
     console.error('Error getting document tags:', error);
+    throw error;
+  }
+};
+
+// New API functions for authentication
+export const emailLogin = async (email, password) => {
+  try {
+    console.log('Attempting email login for:', email);
+    const response = await api.post('/emailLogin', { email, password });
+    console.log('Email login response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error with email login:', error);
+    throw error;
+  }
+};
+
+export const registerUser = async (userData) => {
+  try {
+    console.log('Registering user:', userData.mobileNumber);
+    const response = await api.post('/register', userData);
+    console.log('Registration response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error registering user:', error);
+    throw error;
+  }
+};
+
+export const validateRegistrationOtp = async (mobileNumber, otp) => {
+  try {
+    console.log('Validating registration OTP for:', mobileNumber);
+    const response = await api.post('/validateRegistrationOTP', { mobile_number: mobileNumber, otp });
+    console.log('Registration OTP validation response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error validating registration OTP:', error);
     throw error;
   }
 };
