@@ -1,70 +1,152 @@
-# Getting Started with Create React App
+Document Management System (DMS) – Front-End Interface
+Overview
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project is the front-end implementation of a Document Management System (DMS) using ReactJS. It provides a user-friendly interface for uploading, tagging, searching, previewing, and downloading documents. The system is designed to work seamlessly with a .NET backend and MySQL database, but the focus of this repository is on the front-end functionality.
 
-## Available Scripts
+Features
+1. Authentication and User Management
 
-In the project directory, you can run:
+Login with OTP: Users log in via OTP verification. The backend provides a token upon OTP validation, which is used for subsequent requests.
 
-### `npm start`
+Static Admin Interface: A simple form allows creation of new users with username and password.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Protected Routes: Access to the dashboard and other pages is restricted for unauthenticated users.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+2. Dashboard and Navigation
 
-### `npm test`
+Sidebar Navigation: Navigate between Dashboard, Upload Document, Search Documents, Analytics, Activity, User Management, Settings, and Help & Support pages.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Header Bar: Includes dark mode toggle, logout button, and quick access to sharing modal.
 
-### `npm run build`
+Dark Mode: Users can switch between light and dark themes.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+3. File Upload
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Date Picker: Select the date for document upload.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Category Selection: Dropdown to choose between Personal or Professional documents.
 
-### `npm run eject`
+Dynamic Secondary Dropdown:
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Personal → List of names (e.g., John, Tom, Emily)
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Professional → List of departments (e.g., HR, IT, Finance, Accounts)
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Tag Input: Users can add document tags as chips/tokens. Pre-existing tags are fetched from the backend; new tags are saved automatically.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Remarks Field: Optional text input for additional information.
 
-## Learn More
+File Restrictions: Only image and PDF files are allowed.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+4. File Search
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Search by Category, Tags, and Date Range: Allows filtering of documents based on user input.
 
-### Code Splitting
+Dynamic Results: Displays matching documents with options for preview or download.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+5. File Preview and Download
 
-### Analyzing the Bundle Size
+Preview Supported Files: Simulated preview for PDFs and images.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Unsupported File Types: Displays a notification if a file type cannot be previewed.
 
-### Making a Progressive Web App
+Download Options: Users can download individual files or all results as a ZIP.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+6. Modals and Notifications
 
-### Advanced Configuration
+Preview Modal: View documents without leaving the page.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+Share Modal: Share files directly from the dashboard.
 
-### Deployment
+Toast Notifications: Inform users about success/failure events (e.g., file uploaded, logout).
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+Project Structure
+src/
+│
+├─ components/
+│  ├─ Header.jsx
+│  ├─ Sidebar.jsx
+│  ├─ Dashboard.jsx
+│  ├─ UploadDocument.jsx
+│  ├─ SearchDocuments.jsx
+│  ├─ Analytics.jsx
+│  ├─ Activity.jsx
+│  ├─ ManageUsers.jsx
+│  ├─ Setting.jsx
+│  ├─ HelpSupport.jsx
+│  ├─ PreviewModal.jsx
+│  ├─ ShareModal.jsx
+│  └─ SuccessToast.jsx
+│
+├─ context/
+│  └─ AuthContext.jsx
+│
+├─ styles/
+│  └─ global.css
+│
+├─ App.jsx
+└─ index.js
 
-### `npm run build` fails to minify
+Installation & Setup
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Clone the repository
+
+git clone https://github.com/manishkumarshriwas/DocumentManagementSystem.git
+cd DocumentManagementSystem
+
+
+Install dependencies
+
+npm install
+
+
+Start the development server
+
+npm start
+
+
+The app will run at http://localhost:3000.
+
+Ensure the backend APIs are running and accessible for authentication, file upload, and tag fetching.
+
+Usage
+
+Login with your mobile number and OTP.
+
+Upload documents using the Upload Document page. Select category, secondary dropdown, tags, remarks, and file.
+
+Search documents by category, tags, and date range.
+
+Preview or download files from the search results.
+
+Use sidebar navigation to explore Analytics, Activity logs, User Management, Settings, and Help & Support.
+
+Toggle dark mode from the header bar for better accessibility.
+
+Tech Stack
+
+Front-End: ReactJS, TailwindCSS
+
+Routing: react-router-dom
+
+State Management: React Context API
+
+UI Components: Custom modals, toast notifications, date pickers, dropdowns
+
+Notes
+
+File upload supports only images and PDFs.
+
+Tag input dynamically fetches existing tags and allows creating new ones.
+
+Some features (e.g., ZIP download) are simulated for frontend demonstration purposes.
+
+The backend API endpoints are required for full functionality (authentication, tag management, and document storage).
+
+Author
+
+Manish Kumar
+
+GitHub: https://github.com/manishkumarshriwas
+
+Front-End Developer – Document Management System Assignment
